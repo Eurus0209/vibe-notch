@@ -1,3 +1,11 @@
+//
+//  UsageMonitor.swift
+//  ClaudeIsland
+//
+//  Copyright 2026 Hudie LIU.
+//  Licensed under the Apache License, Version 2.0 — see LICENSE.md.
+//
+
 import Foundation
 import Combine
 
@@ -9,23 +17,20 @@ class UsageMonitor: ObservableObject {
 
     private var refreshTask: Task<Void, Never>?
 
+    /// 2 minutes between refreshes (the OAuth usage endpoint is lightweight but we don't need real-time).
+    private static let refreshInterval: UInt64 = 120_000_000_000
+
     func startMonitoring() {
         guard refreshTask == nil else { return }
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.refresh()
-                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                try? await Task.sleep(nanoseconds: Self.refreshInterval)
             }
         }
     }
 
     func refresh() async {
-        let plan = AppSettings.usagePlan
-        let limits = plan.limits(
-            customFiveHour: AppSettings.customFiveHourLimit,
-            customWeekly: AppSettings.customWeeklyLimit
-        )
-        let newSummary = await UsageAggregator.shared.computeSummary(limits: limits)
-        summary = newSummary
+        summary = await UsageAggregator.shared.computeSummary()
     }
 }

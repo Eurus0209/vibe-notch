@@ -4,6 +4,9 @@
 //
 //  App settings manager using UserDefaults
 //
+//  Modified 2026 by Hudie LIU — added usage-display preferences.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import Foundation
 
@@ -39,9 +42,6 @@ enum AppSettings {
     private enum Keys {
         static let notificationSound = "notificationSound"
         static let claudeDirectoryName = "claudeDirectoryName"
-        static let usagePlan = "usagePlan"
-        static let customFiveHourLimit = "customFiveHourLimit"
-        static let customWeeklyLimit = "customWeeklyLimit"
     }
 
     // MARK: - Notification Sound
@@ -75,38 +75,4 @@ enum AppSettings {
         }
     }
 
-    // MARK: - Usage Plan
-
-    static var usagePlan: UsagePlan {
-        get {
-            guard let rawValue = defaults.string(forKey: Keys.usagePlan),
-                  let plan = UsagePlan(rawValue: rawValue) else {
-                return .pro
-            }
-            return plan
-        }
-        set {
-            defaults.set(newValue.rawValue, forKey: Keys.usagePlan)
-        }
-    }
-
-    static var customFiveHourLimit: Int {
-        get {
-            let value = defaults.integer(forKey: Keys.customFiveHourLimit)
-            return value > 0 ? value : 45_000_000
-        }
-        set {
-            defaults.set(newValue, forKey: Keys.customFiveHourLimit)
-        }
-    }
-
-    static var customWeeklyLimit: Int {
-        get {
-            let value = defaults.integer(forKey: Keys.customWeeklyLimit)
-            return value > 0 ? value : 900_000_000
-        }
-        set {
-            defaults.set(newValue, forKey: Keys.customWeeklyLimit)
-        }
-    }
 }

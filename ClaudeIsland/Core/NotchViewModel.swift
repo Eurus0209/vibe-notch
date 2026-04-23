@@ -4,6 +4,9 @@
 //
 //  State management for the dynamic island
 //
+//  Modified 2026 by Hudie LIU — added usage-tracking state.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import AppKit
 import Combine

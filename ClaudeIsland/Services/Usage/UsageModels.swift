@@ -1,12 +1,23 @@
+//
+//  UsageModels.swift
+//  ClaudeIsland
+//
+//  Copyright 2026 Hudie LIU.
+//  Licensed under the Apache License, Version 2.0 — see LICENSE.md.
+//
+
 import Foundation
 
 struct UsageWindow: Equatable, Sendable {
-    let used: Int
-    let limit: Int
+    /// 0.0–1.0, authoritative percentage from Claude's OAuth usage endpoint.
+    let percentage: Double
     let resetsAt: Date
 
-    var percentage: Double {
-        limit > 0 ? min(Double(used) / Double(limit), 1.0) : 0
+    func timeProgress(windowSeconds: TimeInterval) -> Double {
+        let remaining = resetsAt.timeIntervalSince(Date())
+        guard remaining > 0 else { return 1.0 }
+        let elapsed = windowSeconds - remaining
+        return min(max(elapsed / windowSeconds, 0), 1.0)
     }
 
     var resetDescription: String {
@@ -35,26 +46,9 @@ struct UsageWindow: Equatable, Sendable {
 struct UsageSummary: Equatable, Sendable {
     let fiveHour: UsageWindow
     let weekly: UsageWindow
+    /// Opus-specific weekly window (nil if the account has no Opus limit yet).
+    let weeklyOpus: UsageWindow?
+    /// Sonnet-specific weekly window (nil if absent).
+    let weeklySonnet: UsageWindow?
     let lastUpdated: Date
-}
-
-struct UsagePlanLimits: Sendable {
-    let fiveHourLimit: Int
-    let weeklyLimit: Int
-}
-
-enum UsagePlan: String, CaseIterable, Sendable {
-    case pro = "Pro"
-    case max5x = "Max 5x"
-    case max20x = "Max 20x"
-    case custom = "Custom"
-
-    func limits(customFiveHour: Int = 45_000_000, customWeekly: Int = 900_000_000) -> UsagePlanLimits {
-        switch self {
-        case .pro: return UsagePlanLimits(fiveHourLimit: 45_000_000, weeklyLimit: 900_000_000)
-        case .max5x: return UsagePlanLimits(fiveHourLimit: 225_000_000, weeklyLimit: 4_500_000_000)
-        case .max20x: return UsagePlanLimits(fiveHourLimit: 900_000_000, weeklyLimit: 18_000_000_000)
-        case .custom: return UsagePlanLimits(fiveHourLimit: customFiveHour, weeklyLimit: customWeekly)
-        }
-    }
 }

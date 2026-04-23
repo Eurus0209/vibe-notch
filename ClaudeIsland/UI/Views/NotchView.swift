@@ -4,6 +4,9 @@
 //
 //  The main dynamic island SwiftUI view with accurate notch shape
 //
+//  Modified 2026 by Hudie LIU — integrated usage bar and usage detail layout.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import AppKit
 import CoreGraphics
@@ -230,21 +233,18 @@ struct NotchView: View {
     @ViewBuilder
     private var usageSummaryBar: some View {
         let summary = usageMonitor.summary
-        HStack(spacing: 12) {
+        VStack(spacing: 6) {
             usagePill(
                 percentage: summary?.fiveHour.percentage ?? 0,
+                timeProgress: summary?.fiveHour.timeProgress(windowSeconds: 5 * 3600) ?? 0,
                 label: "5h",
-                reset: summary?.fiveHour.resetDescription ?? "—",
-                color: pillColor(for: summary?.fiveHour.percentage ?? 0)
+                reset: summary?.fiveHour.resetDescription ?? "—"
             )
-
-            Spacer()
-
             usagePill(
                 percentage: summary?.weekly.percentage ?? 0,
+                timeProgress: summary?.weekly.timeProgress(windowSeconds: 7 * 24 * 3600) ?? 0,
                 label: "week",
-                reset: summary?.weekly.resetDescription ?? "—",
-                color: pillColor(for: summary?.weekly.percentage ?? 0)
+                reset: summary?.weekly.resetDescription ?? "—"
             )
         }
         .padding(.horizontal, 12)
@@ -258,36 +258,27 @@ struct NotchView: View {
     }
 
     @ViewBuilder
-    private func usagePill(percentage: Double, label: String, reset: String, color: Color) -> some View {
-        HStack(spacing: 6) {
-            ZStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.15), lineWidth: 2.5)
-                    .frame(width: 20, height: 20)
-                Circle()
-                    .trim(from: 0, to: max(percentage, 0.03))
-                    .stroke(color, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                    .frame(width: 20, height: 20)
-                    .rotationEffect(.degrees(-90))
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text("\(Int(percentage * 100))% · \(label)")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
-                Text(reset)
-                    .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.4))
-            }
+    private func usagePill(percentage: Double, timeProgress: Double, label: String, reset: String) -> some View {
+        HStack(spacing: 8) {
+            Text("\(label)")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+                .frame(width: 28, alignment: .leading)
+            UsageBarView(
+                percentage: percentage,
+                timeProgress: timeProgress,
+                height: 6,
+                showTimeMarker: true
+            )
+            Text("\(Int(percentage * 100))%")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.9))
+                .frame(width: 32, alignment: .trailing)
+            Text(reset)
+                .font(.system(size: 9))
+                .foregroundColor(.white.opacity(0.4))
+                .frame(width: 70, alignment: .trailing)
         }
-    }
-
-    private func pillColor(for percentage: Double) -> Color {
-        if percentage > 0.9 {
-            return Color(red: 0.95, green: 0.3, blue: 0.3)
-        } else if percentage > 0.7 {
-            return Color(red: 0.95, green: 0.75, blue: 0.3)
-        }
-        return Color(red: 0.35, green: 0.65, blue: 1.0)
     }
 
     // MARK: - Header Row (persists across states)
@@ -295,13 +286,16 @@ struct NotchView: View {
     @ViewBuilder
     private var headerRow: some View {
         HStack(spacing: 0) {
-            // Left side - always usage ring (replaces crab icon)
+            // Left side - 5h usage bar only (weekly shown inside the opened panel)
             HStack(spacing: 4) {
-                UsageRingView(
-                    fiveHourPercentage: usageMonitor.summary?.fiveHour.percentage ?? 0,
-                    weeklyPercentage: usageMonitor.summary?.weekly.percentage ?? 0,
-                    size: 18
+                UsageBarView(
+                    percentage: usageMonitor.summary?.fiveHour.percentage ?? 0,
+                    timeProgress: usageMonitor.summary?.fiveHour.timeProgress(windowSeconds: 5 * 3600) ?? 0,
+                    height: 5,
+                    width: 22,
+                    showTimeMarker: true
                 )
+                .frame(width: 22, height: 10)
                 .matchedGeometryEffect(id: "crab", in: activityNamespace)
                 .onTapGesture {
                     if viewModel.status != .opened {
