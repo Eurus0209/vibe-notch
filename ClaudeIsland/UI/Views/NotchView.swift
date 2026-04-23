@@ -204,14 +204,15 @@ struct NotchView: View {
     @ViewBuilder
     private var notchLayout: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header row - always present, contains crab and spinner that persist across states
             headerRow
                 .frame(height: max(24, closedNotchSize.height))
 
-            // Main content only when opened
             if viewModel.status == .opened {
+                usageSummaryBar
+                    .frame(width: notchSize.width - 24)
+
                 contentView
-                    .frame(width: notchSize.width - 24) // Fixed width to prevent reflow
+                    .frame(width: notchSize.width - 24)
                     .transition(
                         .asymmetric(
                             insertion: .scale(scale: 0.8, anchor: .top)
@@ -222,6 +223,71 @@ struct NotchView: View {
                     )
             }
         }
+    }
+
+    // MARK: - Usage Summary Bar (shown at top of opened panel)
+
+    @ViewBuilder
+    private var usageSummaryBar: some View {
+        let summary = usageMonitor.summary
+        HStack(spacing: 12) {
+            usagePill(
+                percentage: summary?.fiveHour.percentage ?? 0,
+                label: "5h",
+                reset: summary?.fiveHour.resetDescription ?? "—",
+                color: pillColor(for: summary?.fiveHour.percentage ?? 0)
+            )
+
+            Spacer()
+
+            usagePill(
+                percentage: summary?.weekly.percentage ?? 0,
+                label: "week",
+                reset: summary?.weekly.resetDescription ?? "—",
+                color: pillColor(for: summary?.weekly.percentage ?? 0)
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.white.opacity(0.05))
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                viewModel.contentType = .usage
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func usagePill(percentage: Double, label: String, reset: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.15), lineWidth: 2.5)
+                    .frame(width: 20, height: 20)
+                Circle()
+                    .trim(from: 0, to: max(percentage, 0.03))
+                    .stroke(color, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .frame(width: 20, height: 20)
+                    .rotationEffect(.degrees(-90))
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text("\(Int(percentage * 100))% · \(label)")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                Text(reset)
+                    .font(.system(size: 9))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+        }
+    }
+
+    private func pillColor(for percentage: Double) -> Color {
+        if percentage > 0.9 {
+            return Color(red: 0.95, green: 0.3, blue: 0.3)
+        } else if percentage > 0.7 {
+            return Color(red: 0.95, green: 0.75, blue: 0.3)
+        }
+        return Color(red: 0.35, green: 0.65, blue: 1.0)
     }
 
     // MARK: - Header Row (persists across states)
