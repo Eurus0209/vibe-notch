@@ -15,14 +15,12 @@ struct UsageRingView: View {
 
     var body: some View {
         ZStack {
-            // Outer ring track (5h)
             Circle()
-                .stroke(Color.white.opacity(0.1), lineWidth: lineWidth)
+                .stroke(Color.white.opacity(0.15), lineWidth: lineWidth)
                 .frame(width: size, height: size)
 
-            // Outer ring fill (5h)
             Circle()
-                .trim(from: 0, to: fiveHourPercentage)
+                .trim(from: 0, to: max(fiveHourPercentage, 0.03))
                 .stroke(
                     ringColor(for: fiveHourPercentage),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
@@ -30,14 +28,12 @@ struct UsageRingView: View {
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(-90))
 
-            // Inner ring track (weekly)
             Circle()
-                .stroke(Color.white.opacity(0.1), lineWidth: lineWidth)
+                .stroke(Color.white.opacity(0.15), lineWidth: lineWidth)
                 .frame(width: innerSize, height: innerSize)
 
-            // Inner ring fill (weekly)
             Circle()
-                .trim(from: 0, to: weeklyPercentage)
+                .trim(from: 0, to: max(weeklyPercentage, 0.03))
                 .stroke(
                     ringColor(for: weeklyPercentage),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)

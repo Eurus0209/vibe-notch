@@ -47,7 +47,7 @@ actor UsageAggregator {
         let fiveHourResetAt = now.addingTimeInterval(5 * 3600)
         let nextWeekStart = weekStart.addingTimeInterval(7 * 24 * 3600)
 
-        return UsageSummary(
+        let summary = UsageSummary(
             fiveHour: UsageWindow(
                 used: fiveHourTokens,
                 limit: limits.fiveHourLimit,
@@ -60,6 +60,8 @@ actor UsageAggregator {
             ),
             lastUpdated: now
         )
+        Self.logger.info("Usage: 5h=\(fiveHourTokens)/\(limits.fiveHourLimit) week=\(weeklyTokens)/\(limits.weeklyLimit) entries=\(allEntries.count)")
+        return summary
     }
 
     private func scanAndParseAllJSONL() -> [TokenEntry] {

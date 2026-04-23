@@ -265,19 +265,16 @@ struct NotchView: View {
             if viewModel.status == .opened {
                 openedHeaderContent
             } else if !showClosedActivity {
-                // Closed without activity: show usage ring centered
                 HStack(spacing: 0) {
                     Spacer()
-                    if let summary = usageMonitor.summary {
-                        UsageRingView(
-                            fiveHourPercentage: summary.fiveHour.percentage,
-                            weeklyPercentage: summary.weekly.percentage,
-                            size: 14
-                        )
-                        .onTapGesture {
-                            viewModel.notchOpen(reason: .click)
-                            viewModel.contentType = .usage
-                        }
+                    UsageRingView(
+                        fiveHourPercentage: usageMonitor.summary?.fiveHour.percentage ?? 0,
+                        weeklyPercentage: usageMonitor.summary?.weekly.percentage ?? 0,
+                        size: 18
+                    )
+                    .onTapGesture {
+                        viewModel.notchOpen(reason: .click)
+                        viewModel.contentType = .usage
                     }
                     Spacer()
                 }
