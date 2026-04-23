@@ -20,8 +20,7 @@ actor UsageAggregator {
         }
 
         let weeklyUsed = fetchWeeklyTokens()
-        let weekStart = Self.currentWeekStart(from: now)
-        let nextWeekStart = weekStart.addingTimeInterval(7 * 24 * 3600)
+        let nextWeekStart = Self.nextBillingWeekReset(from: now)
 
         let summary = UsageSummary(
             fiveHour: UsageWindow(
@@ -218,10 +217,27 @@ actor UsageAggregator {
         return total
     }
 
+    /// Billing week starts Sunday at 01:00 UTC (9am Shanghai)
     static func currentWeekStart(from date: Date) -> Date {
-        var calendar = Calendar.current
-        calendar.firstWeekday = 2
-        let components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-        return calendar.date(from: components) ?? date
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.firstWeekday = 1 // Sunday
+
+        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        components.hour = 1
+        components.minute = 0
+        components.second = 0
+        guard let weekStart = calendar.date(from: components) else { return date }
+
+        // If we're before Sunday 01:00 UTC this week, go back one week
+        if date < weekStart {
+            return weekStart.addingTimeInterval(-7 * 24 * 3600)
+        }
+        return weekStart
+    }
+
+    static func nextBillingWeekReset(from date: Date) -> Date {
+        let weekStart = currentWeekStart(from: date)
+        return weekStart.addingTimeInterval(7 * 24 * 3600)
     }
 }
