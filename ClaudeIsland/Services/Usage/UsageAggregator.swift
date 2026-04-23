@@ -24,8 +24,7 @@ actor UsageAggregator {
         let outputTokens: Int
     }
 
-    func computeSummary() -> UsageSummary {
-        let plan = AppSettings.usagePlan
+    func computeSummary(limits: UsagePlanLimits) -> UsageSummary {
         let now = Date()
 
         let fiveHoursAgo = now.addingTimeInterval(-5 * 3600)
@@ -51,12 +50,12 @@ actor UsageAggregator {
         return UsageSummary(
             fiveHour: UsageWindow(
                 used: fiveHourTokens,
-                limit: plan.fiveHourLimit,
+                limit: limits.fiveHourLimit,
                 resetsAt: fiveHourResetAt
             ),
             weekly: UsageWindow(
                 used: weeklyTokens,
-                limit: plan.weeklyLimit,
+                limit: limits.weeklyLimit,
                 resetsAt: nextWeekStart
             ),
             lastUpdated: now

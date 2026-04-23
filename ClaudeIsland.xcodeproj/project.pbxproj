@@ -8,21 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		FD0F42E72EE7ABA400980302 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = FD0F42E62EE7ABA400980302 /* Mixpanel */; };
-		FD1A00062F09A00100AA0006 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A00012F09A00100AA0001 /* UsageModels.swift */; };
-		FD1A00072F09A00100AA0007 /* UsageAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A00022F09A00100AA0002 /* UsageAggregator.swift */; };
-		FD1A00082F09A00100AA0008 /* UsageMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A00032F09A00100AA0003 /* UsageMonitor.swift */; };
-		FD1A00092F09A00100AA0009 /* UsageRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A00042F09A00100AA0004 /* UsageRingView.swift */; };
-		FD1A000A2F09A00100AA000A /* UsageDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A00052F09A00100AA0005 /* UsageDetailView.swift */; };
 		FDA49F7D2EE11E3C00F9612E /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = FD33FD722EDF32D7002A6548 /* Markdown */; };
 		FDA49F7E2EE11E3C00F9612E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FDA49F7F2EE11E3C00F9612E /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FD1A00012F09A00100AA0001 /* UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageModels.swift; sourceTree = "<group>"; };
-		FD1A00022F09A00100AA0002 /* UsageAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageAggregator.swift; sourceTree = "<group>"; };
-		FD1A00032F09A00100AA0003 /* UsageMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageMonitor.swift; sourceTree = "<group>"; };
-		FD1A00042F09A00100AA0004 /* UsageRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRingView.swift; sourceTree = "<group>"; };
-		FD1A00052F09A00100AA0005 /* UsageDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageDetailView.swift; sourceTree = "<group>"; };
 		FD33FD5D2EDF32D7002A6548 /* Claude Island.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Island.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -61,55 +51,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		FD1A000B2F09A00100AA000B /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				FD1A000C2F09A00100AA000C /* Usage */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		FD1A000C2F09A00100AA000C /* Usage */ = {
-			isa = PBXGroup;
-			children = (
-				FD1A00012F09A00100AA0001 /* UsageModels.swift */,
-				FD1A00022F09A00100AA0002 /* UsageAggregator.swift */,
-				FD1A00032F09A00100AA0003 /* UsageMonitor.swift */,
-			);
-			path = Usage;
-			sourceTree = "<group>";
-		};
-		FD1A000D2F09A00100AA000D /* UI */ = {
-			isa = PBXGroup;
-			children = (
-				FD1A000E2F09A00100AA000E /* Components */,
-				FD1A000F2F09A00100AA000F /* Views */,
-			);
-			path = UI;
-			sourceTree = "<group>";
-		};
-		FD1A000E2F09A00100AA000E /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				FD1A00042F09A00100AA0004 /* UsageRingView.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		FD1A000F2F09A00100AA000F /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				FD1A00052F09A00100AA0005 /* UsageDetailView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
 		FD33FD542EDF32D7002A6548 = {
 			isa = PBXGroup;
 			children = (
 				FD33FD5F2EDF32D7002A6548 /* ClaudeIsland */,
-				FD1A000B2F09A00100AA000B /* Services */,
-				FD1A000D2F09A00100AA000D /* UI */,
 				FD33FD5E2EDF32D7002A6548 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -204,11 +149,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FD1A00062F09A00100AA0006 /* UsageModels.swift in Sources */,
-				FD1A00072F09A00100AA0007 /* UsageAggregator.swift in Sources */,
-				FD1A00082F09A00100AA0008 /* UsageMonitor.swift in Sources */,
-				FD1A00092F09A00100AA0009 /* UsageRingView.swift in Sources */,
-				FD1A000A2F09A00100AA000A /* UsageDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

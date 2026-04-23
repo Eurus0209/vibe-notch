@@ -14,13 +14,18 @@ class UsageMonitor: ObservableObject {
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.refresh()
-                try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
     }
 
     func refresh() async {
-        let newSummary = await UsageAggregator.shared.computeSummary()
+        let plan = AppSettings.usagePlan
+        let limits = plan.limits(
+            customFiveHour: AppSettings.customFiveHourLimit,
+            customWeekly: AppSettings.customWeeklyLimit
+        )
+        let newSummary = await UsageAggregator.shared.computeSummary(limits: limits)
         summary = newSummary
     }
 }

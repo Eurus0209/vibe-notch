@@ -1,6 +1,6 @@
 import Foundation
 
-struct UsageWindow: Equatable {
+struct UsageWindow: Equatable, Sendable {
     let used: Int
     let limit: Int
     let resetsAt: Date
@@ -24,10 +24,15 @@ struct UsageWindow: Equatable {
     }
 }
 
-struct UsageSummary: Equatable {
+struct UsageSummary: Equatable, Sendable {
     let fiveHour: UsageWindow
     let weekly: UsageWindow
     let lastUpdated: Date
+}
+
+struct UsagePlanLimits: Sendable {
+    let fiveHourLimit: Int
+    let weeklyLimit: Int
 }
 
 enum UsagePlan: String, CaseIterable, Sendable {
@@ -36,21 +41,12 @@ enum UsagePlan: String, CaseIterable, Sendable {
     case max20x = "Max 20x"
     case custom = "Custom"
 
-    var fiveHourLimit: Int {
+    func limits(customFiveHour: Int = 450_000, customWeekly: Int = 9_000_000) -> UsagePlanLimits {
         switch self {
-        case .pro: return 450_000
-        case .max5x: return 2_250_000
-        case .max20x: return 9_000_000
-        case .custom: return AppSettings.customFiveHourLimit
-        }
-    }
-
-    var weeklyLimit: Int {
-        switch self {
-        case .pro: return 9_000_000
-        case .max5x: return 45_000_000
-        case .max20x: return 180_000_000
-        case .custom: return AppSettings.customWeeklyLimit
+        case .pro: return UsagePlanLimits(fiveHourLimit: 450_000, weeklyLimit: 9_000_000)
+        case .max5x: return UsagePlanLimits(fiveHourLimit: 2_250_000, weeklyLimit: 45_000_000)
+        case .max20x: return UsagePlanLimits(fiveHourLimit: 9_000_000, weeklyLimit: 180_000_000)
+        case .custom: return UsagePlanLimits(fiveHourLimit: customFiveHour, weeklyLimit: customWeekly)
         }
     }
 }
