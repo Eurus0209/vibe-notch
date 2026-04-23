@@ -54,8 +54,6 @@ actor UsageAggregator {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: ccusagePath)
         process.arguments = ["blocks", "--active", "--json", "--offline"]
-        process.environment = ProcessInfo.processInfo.environment
-
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
@@ -104,7 +102,6 @@ actor UsageAggregator {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: ccusagePath)
         process.arguments = ["blocks", "--since", sinceStr, "--json", "--offline"]
-        process.environment = ProcessInfo.processInfo.environment
 
         let pipe = Pipe()
         process.standardOutput = pipe
