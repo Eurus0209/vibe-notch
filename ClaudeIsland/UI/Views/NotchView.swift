@@ -19,6 +19,7 @@ struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
+    @StateObject private var usageMonitor = UsageMonitor.shared
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var previousWaitingForInputIds: Set<String> = []
@@ -190,10 +191,8 @@ struct NotchView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             sessionMonitor.startMonitoring()
-            // On non-notched devices, keep visible so users have a target to interact with
-            if !viewModel.hasPhysicalNotch {
-                isVisible = true
-            }
+            usageMonitor.startMonitoring()
+            isVisible = true
         }
         .onChange(of: viewModel.status) { oldStatus, newStatus in
             handleStatusChange(from: oldStatus, to: newStatus)
@@ -264,13 +263,25 @@ struct NotchView: View {
 
             // Center content
             if viewModel.status == .opened {
-                // Opened: show header content
                 openedHeaderContent
             } else if !showClosedActivity {
-                // Closed without activity: empty space
-                Rectangle()
-                    .fill(.clear)
-                    .frame(width: closedNotchSize.width - 20)
+                // Closed without activity: show usage ring centered
+                HStack(spacing: 0) {
+                    Spacer()
+                    if let summary = usageMonitor.summary {
+                        UsageRingView(
+                            fiveHourPercentage: summary.fiveHour.percentage,
+                            weeklyPercentage: summary.weekly.percentage,
+                            size: 14
+                        )
+                        .onTapGesture {
+                            viewModel.notchOpen(reason: .click)
+                            viewModel.contentType = .usage
+                        }
+                    }
+                    Spacer()
+                }
+                .frame(width: closedNotchSize.width - 20)
             } else {
                 // Closed with activity: black spacer (with optional bounce)
                 Rectangle()
@@ -365,12 +376,12 @@ struct NotchView: View {
                     sessionMonitor: sessionMonitor,
                     viewModel: viewModel
                 )
-                // Force a fresh ChatView when switching sessions — otherwise
-                // @State (history, session, scroll position) leaks from the
-                // previous session and the view shows the wrong conversation.
-                // Keyed on sessionId only (not the whole SessionState) so
-                // per-event updates still reuse the view.
                 .id(session.sessionId)
+            case .usage:
+                UsageDetailView(
+                    viewModel: viewModel,
+                    usageMonitor: usageMonitor
+                )
             }
         }
         .frame(width: notchSize.width - 24) // Fixed width to prevent text reflow
@@ -388,18 +399,7 @@ struct NotchView: View {
             activityCoordinator.hideActivity()
             isVisible = true
         } else {
-            // Hide activity when done
             activityCoordinator.hideActivity()
-
-            // Delay hiding the notch until animation completes
-            // Don't hide on non-notched devices - users need a visible target
-            if viewModel.status == .closed && viewModel.hasPhysicalNotch {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if !isAnyProcessing && !hasPendingPermission && !hasWaitingForInput && viewModel.status == .closed {
-                        isVisible = false
-                    }
-                }
-            }
         }
     }
 
@@ -412,13 +412,7 @@ struct NotchView: View {
                 waitingForInputTimestamps.removeAll()
             }
         case .closed:
-            // Don't hide on non-notched devices - users need a visible target
-            guard viewModel.hasPhysicalNotch else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                if viewModel.status == .closed && !isAnyProcessing && !hasPendingPermission && !hasWaitingForInput && !activityCoordinator.expandingActivity.show {
-                    isVisible = false
-                }
-            }
+            break
         }
     }
 

@@ -39,6 +39,9 @@ enum AppSettings {
     private enum Keys {
         static let notificationSound = "notificationSound"
         static let claudeDirectoryName = "claudeDirectoryName"
+        static let usagePlan = "usagePlan"
+        static let customFiveHourLimit = "customFiveHourLimit"
+        static let customWeeklyLimit = "customWeeklyLimit"
     }
 
     // MARK: - Notification Sound
@@ -69,6 +72,41 @@ enum AppSettings {
         }
         set {
             defaults.set(newValue.trimmingCharacters(in: .whitespaces), forKey: Keys.claudeDirectoryName)
+        }
+    }
+
+    // MARK: - Usage Plan
+
+    static var usagePlan: UsagePlan {
+        get {
+            guard let rawValue = defaults.string(forKey: Keys.usagePlan),
+                  let plan = UsagePlan(rawValue: rawValue) else {
+                return .pro
+            }
+            return plan
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Keys.usagePlan)
+        }
+    }
+
+    static var customFiveHourLimit: Int {
+        get {
+            let value = defaults.integer(forKey: Keys.customFiveHourLimit)
+            return value > 0 ? value : 450_000
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.customFiveHourLimit)
+        }
+    }
+
+    static var customWeeklyLimit: Int {
+        get {
+            let value = defaults.integer(forKey: Keys.customWeeklyLimit)
+            return value > 0 ? value : 9_000_000
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.customWeeklyLimit)
         }
     }
 }
