@@ -17,10 +17,18 @@ struct UsageWindow: Equatable, Sendable {
         let hours = Int(remaining) / 3600
         let minutes = (Int(remaining) % 3600) / 60
 
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let timeStr = formatter.string(from: resetsAt)
+
+        if hours >= 24 {
+            let days = hours / 24
+            return "\(days)d · \(timeStr)"
         }
-        return "\(minutes)m"
+        if hours > 0 {
+            return "\(hours)h \(minutes)m · \(timeStr)"
+        }
+        return "\(minutes)m · \(timeStr)"
     }
 }
 
