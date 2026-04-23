@@ -255,10 +255,14 @@ struct NotchView: View {
             // Center content
             if viewModel.status == .opened {
                 openedHeaderContent
-            } else {
+            } else if showClosedActivity {
                 Rectangle()
                     .fill(.black)
                     .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top + (isBouncing ? 16 : 0))
+            } else {
+                Rectangle()
+                    .fill(.black)
+                    .frame(width: closedNotchSize.width + sideWidth)
             }
 
             // Right side - spinner when processing/pending, checkmark when waiting for input
