@@ -93,7 +93,7 @@ enum AppSettings {
     static var customFiveHourLimit: Int {
         get {
             let value = defaults.integer(forKey: Keys.customFiveHourLimit)
-            return value > 0 ? value : 450_000
+            return value > 0 ? value : 45_000_000
         }
         set {
             defaults.set(newValue, forKey: Keys.customFiveHourLimit)
@@ -103,7 +103,7 @@ enum AppSettings {
     static var customWeeklyLimit: Int {
         get {
             let value = defaults.integer(forKey: Keys.customWeeklyLimit)
-            return value > 0 ? value : 9_000_000
+            return value > 0 ? value : 900_000_000
         }
         set {
             defaults.set(newValue, forKey: Keys.customWeeklyLimit)

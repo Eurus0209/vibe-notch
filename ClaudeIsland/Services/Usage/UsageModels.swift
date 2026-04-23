@@ -41,11 +41,11 @@ enum UsagePlan: String, CaseIterable, Sendable {
     case max20x = "Max 20x"
     case custom = "Custom"
 
-    func limits(customFiveHour: Int = 450_000, customWeekly: Int = 9_000_000) -> UsagePlanLimits {
+    func limits(customFiveHour: Int = 45_000_000, customWeekly: Int = 900_000_000) -> UsagePlanLimits {
         switch self {
-        case .pro: return UsagePlanLimits(fiveHourLimit: 450_000, weeklyLimit: 9_000_000)
-        case .max5x: return UsagePlanLimits(fiveHourLimit: 2_250_000, weeklyLimit: 45_000_000)
-        case .max20x: return UsagePlanLimits(fiveHourLimit: 9_000_000, weeklyLimit: 180_000_000)
+        case .pro: return UsagePlanLimits(fiveHourLimit: 45_000_000, weeklyLimit: 900_000_000)
+        case .max5x: return UsagePlanLimits(fiveHourLimit: 225_000_000, weeklyLimit: 4_500_000_000)
+        case .max20x: return UsagePlanLimits(fiveHourLimit: 900_000_000, weeklyLimit: 18_000_000_000)
         case .custom: return UsagePlanLimits(fiveHourLimit: customFiveHour, weeklyLimit: customWeekly)
         }
     }
