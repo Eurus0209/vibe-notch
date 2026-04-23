@@ -67,27 +67,14 @@ struct NotchView: View {
     /// Extra width for expanding activities (like Dynamic Island)
     private var expansionWidth: CGFloat {
         let permissionIndicatorWidth: CGFloat = hasPendingPermission ? 18 : 0
+        let baseLeft = sideWidth + permissionIndicatorWidth
 
-        if activityCoordinator.expandingActivity.show {
-            switch activityCoordinator.expandingActivity.type {
-            case .claude:
-                let baseWidth = 2 * max(0, closedNotchSize.height - 12) + 20
-                return baseWidth + permissionIndicatorWidth
-            case .none:
-                break
-            }
+        if showClosedActivity {
+            return baseLeft + sideWidth
         }
 
-        if hasPendingPermission {
-            return 2 * max(0, closedNotchSize.height - 12) + 20 + permissionIndicatorWidth
-        }
-
-        if hasWaitingForInput {
-            return 2 * max(0, closedNotchSize.height - 12) + 20
-        }
-
-        // Always expand for usage ring on left side
-        return max(0, closedNotchSize.height - 12) + 10
+        // Always expand for usage ring on left
+        return baseLeft
     }
 
     private var notchSize: CGSize {
@@ -242,39 +229,32 @@ struct NotchView: View {
     @ViewBuilder
     private var headerRow: some View {
         HStack(spacing: 0) {
-            // Left side - usage ring (replaces crab when idle) or crab + indicators when active
-            if showClosedActivity {
-                HStack(spacing: 4) {
-                    ClaudeCrabIcon(size: 14, animateLegs: isProcessing)
-                        .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: showClosedActivity)
-
-                    if hasPendingPermission {
-                        PermissionIndicatorIcon(size: 14, color: Color(red: 0.85, green: 0.47, blue: 0.34))
-                            .matchedGeometryEffect(id: "status-indicator", in: activityNamespace, isSource: showClosedActivity)
-                    }
-                }
-                .frame(width: viewModel.status == .opened ? nil : sideWidth + (hasPendingPermission ? 18 : 0))
-                .padding(.leading, viewModel.status == .opened ? 8 : 0)
-            } else if viewModel.status != .opened {
+            // Left side - always usage ring (replaces crab icon)
+            HStack(spacing: 4) {
                 UsageRingView(
                     fiveHourPercentage: usageMonitor.summary?.fiveHour.percentage ?? 0,
                     weeklyPercentage: usageMonitor.summary?.weekly.percentage ?? 0,
                     size: 18
                 )
-                .frame(width: sideWidth)
+                .matchedGeometryEffect(id: "crab", in: activityNamespace)
                 .onTapGesture {
-                    viewModel.notchOpen(reason: .click)
+                    if viewModel.status != .opened {
+                        viewModel.notchOpen(reason: .click)
+                    }
                     viewModel.contentType = .usage
                 }
+
+                if hasPendingPermission {
+                    PermissionIndicatorIcon(size: 14, color: Color(red: 0.85, green: 0.47, blue: 0.34))
+                        .matchedGeometryEffect(id: "status-indicator", in: activityNamespace)
+                }
             }
+            .frame(width: viewModel.status == .opened ? nil : sideWidth + (hasPendingPermission ? 18 : 0))
+            .padding(.leading, viewModel.status == .opened ? 8 : 0)
 
             // Center content
             if viewModel.status == .opened {
                 openedHeaderContent
-            } else if !showClosedActivity {
-                Rectangle()
-                    .fill(.clear)
-                    .frame(width: closedNotchSize.width - 20)
             } else {
                 Rectangle()
                     .fill(.black)
@@ -308,13 +288,6 @@ struct NotchView: View {
     @ViewBuilder
     private var openedHeaderContent: some View {
         HStack(spacing: 12) {
-            // Show static crab only if not showing activity in headerRow
-            // (headerRow handles crab + indicator when showClosedActivity is true)
-            if !showClosedActivity {
-                ClaudeCrabIcon(size: 14)
-                    .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: !showClosedActivity)
-                    .padding(.leading, 8)
-            }
 
             Spacer()
 
