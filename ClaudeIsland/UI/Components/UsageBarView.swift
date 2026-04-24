@@ -61,6 +61,7 @@ struct UsageBarView: View {
         let red = Color(red: 0.95, green: 0.30, blue: 0.30)
 
         if percentage >= 0.80 { return red }
+        if percentage < 0.15 { return green }
 
         let delta = percentage - timeProgress  // positive ⇒ ahead of pace
         if delta > 0.10 { return red }
