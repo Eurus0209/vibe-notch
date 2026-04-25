@@ -4,6 +4,9 @@
 //
 //  App settings manager using UserDefaults
 //
+//  Modified 2026 by Hudie LIU — added usage-display preferences.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import Foundation
 
@@ -71,4 +74,5 @@ enum AppSettings {
             defaults.set(newValue.trimmingCharacters(in: .whitespaces), forKey: Keys.claudeDirectoryName)
         }
     }
+
 }

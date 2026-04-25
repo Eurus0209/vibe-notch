@@ -18,6 +18,16 @@
 >
 > Launched v1.2 in December 2025, then took a 4-month break. v1.3 (April 2026) works through the backlog of contributor PRs and bug reports and kicks off a regular cadence again. Open PRs and issues are being reviewed — thanks for your patience.
 
+> **📌 About this fork**
+>
+> This is a personal fork of [farouqaldori/vibe-notch](https://github.com/farouqaldori/vibe-notch) (Apache-2.0). Changes in this fork:
+> - Usage tracking against Anthropic's OAuth usage endpoint (5h / 7d windows)
+> - Usage summary bar rendered at the top of the opened notch panel
+> - Weekly reset aligned to Anthropic billing cycle
+> - Replaced the ring-style usage indicator with a bar indicator
+>
+> All original copyright and licensing is retained. See `LICENSE.md`.
+
 ## Features
 
 - **Notch UI** — Animated overlay that expands from the MacBook notch
@@ -47,12 +57,7 @@ When Claude needs permission to run a tool, the notch expands with approve/deny 
 
 ## Analytics
 
-Vibe Notch uses Mixpanel to collect anonymous usage data:
-
-- **App Launched** — App version, build number, macOS version
-- **Session Started** — When a new Claude Code session is detected
-
-No personal data or conversation content is collected.
+This fork has **removed** the upstream Mixpanel analytics integration. No usage data is sent anywhere.
 
 ## License
 

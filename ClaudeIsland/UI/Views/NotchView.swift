@@ -4,6 +4,9 @@
 //
 //  The main dynamic island SwiftUI view with accurate notch shape
 //
+//  Modified 2026 by Hudie LIU — integrated usage bar and usage detail layout.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import AppKit
 import CoreGraphics
@@ -19,6 +22,7 @@ struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
+    @StateObject private var usageMonitor = UsageMonitor.shared
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var previousWaitingForInputIds: Set<String> = []
@@ -65,31 +69,15 @@ struct NotchView: View {
 
     /// Extra width for expanding activities (like Dynamic Island)
     private var expansionWidth: CGFloat {
-        // Permission indicator adds width on left side only
         let permissionIndicatorWidth: CGFloat = hasPendingPermission ? 18 : 0
+        let baseLeft = sideWidth + permissionIndicatorWidth
 
-        // Expand for processing activity
-        if activityCoordinator.expandingActivity.show {
-            switch activityCoordinator.expandingActivity.type {
-            case .claude:
-                let baseWidth = 2 * max(0, closedNotchSize.height - 12) + 20
-                return baseWidth + permissionIndicatorWidth
-            case .none:
-                break
-            }
+        if showClosedActivity {
+            return baseLeft + sideWidth
         }
 
-        // Expand for pending permissions (left indicator) or waiting for input (checkmark on right)
-        if hasPendingPermission {
-            return 2 * max(0, closedNotchSize.height - 12) + 20 + permissionIndicatorWidth
-        }
-
-        // Waiting for input just shows checkmark on right, no extra left indicator
-        if hasWaitingForInput {
-            return 2 * max(0, closedNotchSize.height - 12) + 20
-        }
-
-        return 0
+        // Always expand for usage ring on left
+        return baseLeft
     }
 
     private var notchSize: CGSize {
@@ -190,10 +178,8 @@ struct NotchView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             sessionMonitor.startMonitoring()
-            // On non-notched devices, keep visible so users have a target to interact with
-            if !viewModel.hasPhysicalNotch {
-                isVisible = true
-            }
+            usageMonitor.startMonitoring()
+            isVisible = true
         }
         .onChange(of: viewModel.status) { oldStatus, newStatus in
             handleStatusChange(from: oldStatus, to: newStatus)
@@ -221,14 +207,15 @@ struct NotchView: View {
     @ViewBuilder
     private var notchLayout: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header row - always present, contains crab and spinner that persist across states
             headerRow
                 .frame(height: max(24, closedNotchSize.height))
 
-            // Main content only when opened
             if viewModel.status == .opened {
+                usageSummaryBar
+                    .frame(width: notchSize.width - 24)
+
                 contentView
-                    .frame(width: notchSize.width - 24) // Fixed width to prevent reflow
+                    .frame(width: notchSize.width - 24)
                     .transition(
                         .asymmetric(
                             insertion: .scale(scale: 0.8, anchor: .top)
@@ -241,41 +228,101 @@ struct NotchView: View {
         }
     }
 
+    // MARK: - Usage Summary Bar (shown at top of opened panel)
+
+    @ViewBuilder
+    private var usageSummaryBar: some View {
+        let summary = usageMonitor.summary
+        VStack(spacing: 6) {
+            usagePill(
+                percentage: summary?.fiveHour.percentage ?? 0,
+                timeProgress: summary?.fiveHour.timeProgress(windowSeconds: 5 * 3600) ?? 0,
+                label: "5h",
+                reset: summary?.fiveHour.resetDescription ?? "—"
+            )
+            usagePill(
+                percentage: summary?.weekly.percentage ?? 0,
+                timeProgress: summary?.weekly.timeProgress(windowSeconds: 7 * 24 * 3600) ?? 0,
+                label: "week",
+                reset: summary?.weekly.resetDescription ?? "—"
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.white.opacity(0.05))
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                viewModel.contentType = .usage
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func usagePill(percentage: Double, timeProgress: Double, label: String, reset: String) -> some View {
+        HStack(spacing: 8) {
+            Text("\(label)")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+                .frame(width: 28, alignment: .leading)
+            UsageBarView(
+                percentage: percentage,
+                timeProgress: timeProgress,
+                height: 6,
+                showTimeMarker: true
+            )
+            Text("\(Int(percentage * 100))%")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.9))
+                .frame(width: 32, alignment: .trailing)
+            Text(reset)
+                .font(.system(size: 9))
+                .foregroundColor(.white.opacity(0.4))
+                .frame(width: 70, alignment: .trailing)
+        }
+    }
+
     // MARK: - Header Row (persists across states)
 
     @ViewBuilder
     private var headerRow: some View {
         HStack(spacing: 0) {
-            // Left side - crab + optional permission indicator (visible when processing, pending, or waiting for input)
-            if showClosedActivity {
-                HStack(spacing: 4) {
-                    ClaudeCrabIcon(size: 14, animateLegs: isProcessing)
-                        .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: showClosedActivity)
-
-                    // Permission indicator only (amber) - waiting for input shows checkmark on right
-                    if hasPendingPermission {
-                        PermissionIndicatorIcon(size: 14, color: Color(red: 0.85, green: 0.47, blue: 0.34))
-                            .matchedGeometryEffect(id: "status-indicator", in: activityNamespace, isSource: showClosedActivity)
+            // Left side - 5h usage bar only (weekly shown inside the opened panel)
+            HStack(spacing: 4) {
+                UsageBarView(
+                    percentage: usageMonitor.summary?.fiveHour.percentage ?? 0,
+                    timeProgress: usageMonitor.summary?.fiveHour.timeProgress(windowSeconds: 5 * 3600) ?? 0,
+                    height: 5,
+                    width: 22,
+                    showTimeMarker: true
+                )
+                .frame(width: 22, height: 10)
+                .matchedGeometryEffect(id: "crab", in: activityNamespace)
+                .onTapGesture {
+                    if viewModel.status != .opened {
+                        viewModel.notchOpen(reason: .click)
                     }
+                    viewModel.contentType = .usage
                 }
-                .frame(width: viewModel.status == .opened ? nil : sideWidth + (hasPendingPermission ? 18 : 0))
-                .padding(.leading, viewModel.status == .opened ? 8 : 0)
+
+                if hasPendingPermission {
+                    PermissionIndicatorIcon(size: 14, color: Color(red: 0.85, green: 0.47, blue: 0.34))
+                        .matchedGeometryEffect(id: "status-indicator", in: activityNamespace)
+                }
             }
+            .frame(width: viewModel.status == .opened ? nil : sideWidth + (hasPendingPermission ? 18 : 0))
+            .padding(.leading, viewModel.status == .opened ? 8 : 0)
 
             // Center content
             if viewModel.status == .opened {
-                // Opened: show header content
                 openedHeaderContent
-            } else if !showClosedActivity {
-                // Closed without activity: empty space
-                Rectangle()
-                    .fill(.clear)
-                    .frame(width: closedNotchSize.width - 20)
-            } else {
-                // Closed with activity: black spacer (with optional bounce)
+            } else if showClosedActivity {
                 Rectangle()
                     .fill(.black)
                     .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top + (isBouncing ? 16 : 0))
+            } else {
+                Rectangle()
+                    .fill(.black)
+                    .frame(width: closedNotchSize.width + sideWidth)
             }
 
             // Right side - spinner when processing/pending, checkmark when waiting for input
@@ -286,7 +333,6 @@ struct NotchView: View {
                         .frame(width: viewModel.status == .opened ? 20 : sideWidth)
                         .padding(.trailing, viewModel.status == .opened ? 0 : 4)
                 } else if hasWaitingForInput {
-                    // Checkmark for waiting-for-input on the right side
                     ReadyForInputIndicatorIcon(size: 14, color: TerminalColors.green)
                         .matchedGeometryEffect(id: "spinner", in: activityNamespace, isSource: showClosedActivity)
                         .frame(width: viewModel.status == .opened ? 20 : sideWidth)
@@ -306,13 +352,6 @@ struct NotchView: View {
     @ViewBuilder
     private var openedHeaderContent: some View {
         HStack(spacing: 12) {
-            // Show static crab only if not showing activity in headerRow
-            // (headerRow handles crab + indicator when showClosedActivity is true)
-            if !showClosedActivity {
-                ClaudeCrabIcon(size: 14)
-                    .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: !showClosedActivity)
-                    .padding(.leading, 8)
-            }
 
             Spacer()
 
@@ -365,12 +404,12 @@ struct NotchView: View {
                     sessionMonitor: sessionMonitor,
                     viewModel: viewModel
                 )
-                // Force a fresh ChatView when switching sessions — otherwise
-                // @State (history, session, scroll position) leaks from the
-                // previous session and the view shows the wrong conversation.
-                // Keyed on sessionId only (not the whole SessionState) so
-                // per-event updates still reuse the view.
                 .id(session.sessionId)
+            case .usage:
+                UsageDetailView(
+                    viewModel: viewModel,
+                    usageMonitor: usageMonitor
+                )
             }
         }
         .frame(width: notchSize.width - 24) // Fixed width to prevent text reflow
@@ -388,18 +427,7 @@ struct NotchView: View {
             activityCoordinator.hideActivity()
             isVisible = true
         } else {
-            // Hide activity when done
             activityCoordinator.hideActivity()
-
-            // Delay hiding the notch until animation completes
-            // Don't hide on non-notched devices - users need a visible target
-            if viewModel.status == .closed && viewModel.hasPhysicalNotch {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if !isAnyProcessing && !hasPendingPermission && !hasWaitingForInput && viewModel.status == .closed {
-                        isVisible = false
-                    }
-                }
-            }
         }
     }
 
@@ -412,13 +440,7 @@ struct NotchView: View {
                 waitingForInputTimestamps.removeAll()
             }
         case .closed:
-            // Don't hide on non-notched devices - users need a visible target
-            guard viewModel.hasPhysicalNotch else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                if viewModel.status == .closed && !isAnyProcessing && !hasPendingPermission && !hasWaitingForInput && !activityCoordinator.expandingActivity.show {
-                    isVisible = false
-                }
-            }
+            break
         }
     }
 

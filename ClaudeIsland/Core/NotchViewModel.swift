@@ -4,6 +4,9 @@
 //
 //  State management for the dynamic island
 //
+//  Modified 2026 by Hudie LIU — added usage-tracking state.
+//  Original work Copyright 2025 Farouq Aldori, licensed under Apache-2.0.
+//
 
 import AppKit
 import Combine
@@ -27,12 +30,14 @@ enum NotchContentType: Equatable {
     case instances
     case menu
     case chat(SessionState)
+    case usage
 
     var id: String {
         switch self {
         case .instances: return "instances"
         case .menu: return "menu"
         case .chat(let session): return "chat-\(session.sessionId)"
+        case .usage: return "usage"
         }
     }
 }
@@ -86,6 +91,11 @@ class NotchViewModel: ObservableObject {
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
                 height: 320
+            )
+        case .usage:
+            return CGSize(
+                width: min(screenRect.width * 0.4, 480),
+                height: 420
             )
         }
     }
